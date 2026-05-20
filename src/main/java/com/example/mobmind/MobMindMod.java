@@ -4,12 +4,15 @@ import com.example.mobmind.attachment.ModAttachments;
 import com.example.mobmind.config.MobMindConfig;
 import com.example.mobmind.event.CombatEventHandler;
 import com.example.mobmind.event.LevelTickHandler;
+import com.example.mobmind.item.ModItems;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.common.Mod;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import org.slf4j.Logger;
 
 @Mod(MobMindMod.MODID)
@@ -19,6 +22,8 @@ public class MobMindMod {
 
     public MobMindMod(IEventBus modEventBus, ModContainer modContainer) {
         ModAttachments.register(modEventBus);
+        ModItems.register(modEventBus);
+        modEventBus.addListener(this::onBuildCreativeModeTabContents);
         modContainer.registerConfig(ModConfig.Type.SERVER, MobMindConfig.SERVER_SPEC);
         NeoForge.EVENT_BUS.addListener(MobMindTickHandler::onEntityTick);
         NeoForge.EVENT_BUS.addListener(LevelTickHandler::onLevelTick);
@@ -27,4 +32,11 @@ public class MobMindMod {
         NeoForge.EVENT_BUS.addListener(MobMindDebugCommands::register);
         LOGGER.info("MobMind initialized");
     }
+
+    private void onBuildCreativeModeTabContents(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
+            event.accept(ModItems.DEBUG_STICK);
+        }
+    }
 }
+
