@@ -15,6 +15,10 @@ public class HiveData {
     @Nullable
     private UUID targetUuid;
     private HiveOrder currentOrder;
+    @Nullable
+    private UUID pendingThreatUuid;
+    private long lastThreatReportTick;
+    private int threatLevel;
 
     public HiveData(UUID groupId, UUID leaderUuid, HiveOrder currentOrder) {
         this(groupId, leaderUuid, 1, 6, currentOrder);
@@ -91,4 +95,36 @@ public class HiveData {
     public void setCurrentOrder(HiveOrder currentOrder) {
         this.currentOrder = currentOrder;
     }
+
+    @Nullable
+    public UUID getPendingThreatUuid() {
+        return pendingThreatUuid;
+    }
+
+    public void setPendingThreatUuid(@Nullable UUID pendingThreatUuid) {
+        this.pendingThreatUuid = pendingThreatUuid;
+    }
+
+    public long getLastThreatReportTick() {
+        return lastThreatReportTick;
+    }
+
+    public void setLastThreatReportTick(long lastThreatReportTick) {
+        this.lastThreatReportTick = Math.max(0L, lastThreatReportTick);
+    }
+
+    public int getThreatLevel() {
+        return threatLevel;
+    }
+
+    public void setThreatLevel(int threatLevel) {
+        this.threatLevel = Math.max(0, threatLevel);
+    }
+
+    public void clearThreatReport() {
+        pendingThreatUuid = null;
+        lastThreatReportTick = 0L;
+        threatLevel = 0;
+    }
 }
+

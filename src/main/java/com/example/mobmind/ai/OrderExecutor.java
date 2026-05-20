@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public final class OrderExecutor {
     public static final int EXECUTE_INTERVAL_TICKS = 20;
     private static final float RETREAT_HEALTH_RATIO = 0.30F;
+    private static final long THREAT_REPORT_TTL_TICKS = 80L;
 
     private OrderExecutor() {
     }
@@ -67,8 +68,10 @@ public final class OrderExecutor {
 
             Player visibleTarget = findVisiblePlayer(level, leader);
             if (visibleTarget != null && group.getCurrentOrder() != HiveOrder.RETREAT) {
-                HiveManager.setGroupTarget(level, group.getGroupId(), visibleTarget.getUUID());
+                HiveManager.reportThreat(level, group.getGroupId(), visibleTarget.getUUID(), level.getGameTime(), 1);
             }
+
+            consumeThreatReport(level, group);
 
             if (group.getCurrentOrder() == HiveOrder.HUNT_PLAYER) {
                 Player target = getTarget(level, group);
@@ -85,6 +88,26 @@ public final class OrderExecutor {
                 RoleExecutor.executeIdleRoles(level, group, leader);
             }
         }
+    }
+
+
+    private static void consumeThreatReport(ServerLevel level, HiveData group) {
+        if (group.getPendingThreatUuid() == null) {
+            return;
+        }
+
+        long age = level.getGameTime() - group.getLastThreatReportTick();
+        if (age > THREAT_REPORT_TTL_TICKS) {
+            group.clearThreatReport();
+            return;
+        }
+
+        if (group.getCurrentOrder() == HiveOrder.RETREAT) {
+            return;
+        }
+
+        HiveManager.setGroupTarget(level, group.getGroupId(), group.getPendingThreatUuid(), HiveOrder.HUNT_PLAYER);
+        group.clearThreatReport();
     }
 
     private static boolean shouldRetreat(Zombie leader) {
