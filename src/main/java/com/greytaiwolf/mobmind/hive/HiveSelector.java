@@ -45,6 +45,7 @@ public final class HiveSelector {
             ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "awakened_zombie_leader_attack");
     private static final ResourceLocation LEADER_SCALE_MODIFIER =
             ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "awakened_zombie_leader_scale");
+    private static final float VANILLA_EQUIPMENT_DROP_CHANCE = 0.085F;
 
     private HiveSelector() {
     }
@@ -271,9 +272,9 @@ public final class HiveSelector {
         data.setOriginalMainHand(zombie.getItemBySlot(EquipmentSlot.MAINHAND));
         data.setOriginalOffHand(zombie.getItemBySlot(EquipmentSlot.OFFHAND));
         data.setOriginalHead(zombie.getItemBySlot(EquipmentSlot.HEAD));
-        data.setOriginalMainHandDropChance(zombie.getEquipmentDropChance(EquipmentSlot.MAINHAND));
-        data.setOriginalOffHandDropChance(zombie.getEquipmentDropChance(EquipmentSlot.OFFHAND));
-        data.setOriginalHeadDropChance(zombie.getEquipmentDropChance(EquipmentSlot.HEAD));
+        data.setOriginalMainHandDropChance(VANILLA_EQUIPMENT_DROP_CHANCE);
+        data.setOriginalOffHandDropChance(VANILLA_EQUIPMENT_DROP_CHANCE);
+        data.setOriginalHeadDropChance(VANILLA_EQUIPMENT_DROP_CHANCE);
         data.setEquipmentSnapshotCaptured(true);
     }
 

@@ -35,7 +35,7 @@ public class MobMindMod {
 
     private void onBuildCreativeModeTabContents(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
-            event.accept(ModItems.DEBUG_STICK);
+            event.accept(ModItems.DEBUG_STICK.get());
         }
     }
 }

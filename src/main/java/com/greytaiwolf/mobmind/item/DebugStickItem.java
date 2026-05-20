@@ -32,7 +32,7 @@ public class DebugStickItem extends Item {
         }
 
         ModAttachments.get(monster).addAwareness(100);
-        int awareness = ModAttachments.get(monster).awareness();
+        int awareness = ModAttachments.get(monster).getAwareness();
         player.sendSystemMessage(Component.literal("Awareness: " + awareness));
         return InteractionResult.SUCCESS;
     }
