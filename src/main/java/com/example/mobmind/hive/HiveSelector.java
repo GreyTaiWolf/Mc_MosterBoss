@@ -3,6 +3,7 @@ package com.example.mobmind.hive;
 import com.example.mobmind.MobMindMod;
 import com.example.mobmind.attachment.MobMindData;
 import com.example.mobmind.attachment.ModAttachments;
+import com.example.mobmind.config.MobMindConfig;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ChunkPos;
 
 public final class HiveSelector {
     public static final int SCAN_INTERVAL_TICKS = 200;
@@ -41,6 +43,8 @@ public final class HiveSelector {
             ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "awakened_zombie_leader_attack");
     private static final ResourceLocation LEADER_SCALE_MODIFIER =
             ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "awakened_zombie_leader_scale");
+    private static final ResourceLocation ZOMBIE_SPECIES_ID =
+            ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "zombie");
 
     private HiveSelector() {
     }
@@ -110,6 +114,13 @@ public final class HiveSelector {
     }
 
     private static void createGroup(ServerLevel level, Zombie leader, List<Zombie> team) {
+        ResourceLocation speciesId = ZOMBIE_SPECIES_ID;
+        ChunkPos centerChunk = leader.chunkPosition();
+        int exclusionRadius = MobMindConfig.SAME_SPECIES_LEADER_EXCLUSION_CHUNK_RADIUS.get();
+        if (HiveManager.hasActiveLeaderNearby(level, speciesId, centerChunk, exclusionRadius)) {
+            return;
+        }
+
         UUID groupId = UUID.randomUUID();
         UUID leaderUuid = leader.getUUID();
         long assignedAt = level.getGameTime();
@@ -127,6 +138,7 @@ public final class HiveSelector {
         assignRoleIfPresent(roleMembers, 4, groupId, leaderUuid, HiveRole.BUILDER, assignedAt);
 
         HiveData group = HiveManager.getOrCreateGroup(level, groupId, leaderUuid, HiveOrder.IDLE);
+        group.setSpeciesId(speciesId);
         group.setLeaderLevel(LEADER_LEVEL_ONE);
         group.setCapacity(LEVEL_ONE_CAPACITY);
         applyLeaderPresentation(leader);
