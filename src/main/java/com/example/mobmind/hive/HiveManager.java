@@ -143,7 +143,13 @@ public final class HiveManager {
         } else {
             HiveSavedData.get(level).removeGroup(groupId);
         }
-        forEachGroupZombie(level, groupId, zombie -> ModAttachments.get(zombie).clearGroup());
+        forEachGroupZombie(level, groupId, zombie -> {
+            HiveSelector.restoreMobMindState(zombie);
+            zombie.setTarget(null);
+            zombie.setLastHurtByMob(null);
+            zombie.getNavigation().stop();
+            ModAttachments.get(zombie).clearGroup();
+        });
     }
 
     public static void forEachGroupZombie(ServerLevel level, UUID groupId, ZombieConsumer consumer) {
