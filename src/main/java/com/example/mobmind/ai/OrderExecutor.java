@@ -11,10 +11,10 @@ import java.util.Comparator;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
+import com.example.mobmind.species.SpeciesProfiles;
 
 public final class OrderExecutor {
     public static final int EXECUTE_INTERVAL_TICKS = 20;
@@ -117,7 +117,7 @@ public final class OrderExecutor {
     @Nullable
     private static Zombie getLeader(ServerLevel level, HiveData group) {
         Entity entity = level.getEntity(group.getLeaderUuid());
-        if (entity instanceof Zombie zombie && zombie.isAlive() && zombie.getType() == EntityType.ZOMBIE) {
+        if (entity instanceof Zombie zombie && zombie.isAlive() && SpeciesProfiles.forMonster(zombie) != null) {
             return zombie;
         }
 

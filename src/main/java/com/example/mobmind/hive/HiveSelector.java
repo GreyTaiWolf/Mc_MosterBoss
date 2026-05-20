@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.UUID;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import com.example.mobmind.species.SpeciesProfile;
+import com.example.mobmind.species.SpeciesProfiles;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
@@ -43,8 +45,6 @@ public final class HiveSelector {
             ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "awakened_zombie_leader_attack");
     private static final ResourceLocation LEADER_SCALE_MODIFIER =
             ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "awakened_zombie_leader_scale");
-    private static final ResourceLocation ZOMBIE_SPECIES_ID =
-            ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "zombie");
 
     private HiveSelector() {
     }
@@ -114,7 +114,12 @@ public final class HiveSelector {
     }
 
     private static void createGroup(ServerLevel level, Zombie leader, List<Zombie> team) {
-        ResourceLocation speciesId = ZOMBIE_SPECIES_ID;
+        SpeciesProfile profile = SpeciesProfiles.forMonster(leader);
+        if (profile == null) {
+            return;
+        }
+
+        ResourceLocation speciesId = profile.id();
         ChunkPos centerChunk = leader.chunkPosition();
         int exclusionRadius = MobMindConfig.SAME_SPECIES_LEADER_EXCLUSION_CHUNK_RADIUS.get();
         if (HiveManager.hasActiveLeaderNearby(level, speciesId, centerChunk, exclusionRadius)) {
