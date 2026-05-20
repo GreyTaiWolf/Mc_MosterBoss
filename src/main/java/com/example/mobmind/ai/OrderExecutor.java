@@ -11,8 +11,8 @@ import java.util.Comparator;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
+import com.example.mobmind.species.SpeciesProfiles;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ public final class OrderExecutor {
                 HiveManager.disbandGroup(level, group.getGroupId());
                 continue;
             }
-            HiveSelector.applyLeaderHighlight(leader);
+            SpeciesProfiles.zombie().applyLeaderHighlight(leader);
 
             if (shouldRetreat(leader) || group.getCurrentOrder() == HiveOrder.RETREAT) {
                 HiveManager.clearGroupTarget(level, group.getGroupId(), HiveOrder.RETREAT);
@@ -94,7 +94,7 @@ public final class OrderExecutor {
     @Nullable
     private static Zombie getLeader(ServerLevel level, HiveData group) {
         Entity entity = level.getEntity(group.getLeaderUuid());
-        if (entity instanceof Zombie zombie && zombie.isAlive() && zombie.getType() == EntityType.ZOMBIE) {
+        if (entity instanceof Zombie zombie && zombie.isAlive() && SpeciesProfiles.zombie().isEligibleLeader(zombie)) {
             return zombie;
         }
 

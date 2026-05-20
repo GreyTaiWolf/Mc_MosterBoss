@@ -7,8 +7,8 @@ import com.example.mobmind.hive.HiveManager;
 import com.example.mobmind.hive.HiveOrder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
+import com.example.mobmind.species.SpeciesProfiles;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -18,7 +18,7 @@ public final class CombatEventHandler {
     }
 
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
-        if (!(event.getEntity() instanceof Zombie zombie) || zombie.getType() != EntityType.ZOMBIE) {
+        if (!(event.getEntity() instanceof Zombie zombie) || !SpeciesProfiles.zombie().isEligibleLeader(zombie)) {
             return;
         }
         if (!(zombie.level() instanceof ServerLevel level)) {
@@ -38,7 +38,7 @@ public final class CombatEventHandler {
     }
 
     public static void onLivingDeath(LivingDeathEvent event) {
-        if (!(event.getEntity() instanceof Zombie zombie) || zombie.getType() != EntityType.ZOMBIE) {
+        if (!(event.getEntity() instanceof Zombie zombie) || !SpeciesProfiles.zombie().isEligibleLeader(zombie)) {
             return;
         }
         if (!(zombie.level() instanceof ServerLevel level)) {
