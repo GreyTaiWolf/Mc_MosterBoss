@@ -1,11 +1,14 @@
 package com.example.mobmind.hive;
 
 import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 public class HiveData {
+    private static final ResourceLocation DEFAULT_SPECIES_ID = ResourceLocation.fromNamespaceAndPath("mobmind", "zombie");
     private final UUID groupId;
     private UUID leaderUuid;
+    private ResourceLocation speciesId;
     private int leaderLevel;
     private int capacity;
     private int simulatedMinerals;
@@ -20,6 +23,7 @@ public class HiveData {
     public HiveData(UUID groupId, UUID leaderUuid, int leaderLevel, int capacity, HiveOrder currentOrder) {
         this.groupId = groupId;
         this.leaderUuid = leaderUuid;
+        this.speciesId = DEFAULT_SPECIES_ID;
         this.leaderLevel = Math.max(1, leaderLevel);
         this.capacity = Math.max(1, capacity);
         this.currentOrder = currentOrder;
@@ -35,6 +39,14 @@ public class HiveData {
 
     public void setLeaderUuid(UUID leaderUuid) {
         this.leaderUuid = leaderUuid;
+    }
+
+    public ResourceLocation getSpeciesId() {
+        return speciesId;
+    }
+
+    public void setSpeciesId(ResourceLocation speciesId) {
+        this.speciesId = speciesId == null ? DEFAULT_SPECIES_ID : speciesId;
     }
 
     public int getLeaderLevel() {

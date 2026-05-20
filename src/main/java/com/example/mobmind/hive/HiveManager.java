@@ -9,10 +9,12 @@ import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +47,43 @@ public final class HiveManager {
 
     public static Collection<HiveData> getGroups(ServerLevel level) {
         return groups(level).values();
+    }
+
+    public static boolean hasActiveLeaderNearby(ServerLevel level, ResourceLocation speciesId, ChunkPos center, int chunkRadius) {
+        Map<UUID, HiveData> groups = groups(level);
+        java.util.List<UUID> staleGroupIds = new java.util.ArrayList<>();
+        boolean foundActiveNearby = false;
+        for (Map.Entry<UUID, HiveData> entry : groups.entrySet()) {
+            UUID groupId = entry.getKey();
+            HiveData group = entry.getValue();
+            if (!speciesId.equals(group.getSpeciesId())) {
+                continue;
+            }
+
+            Entity entity = level.getEntity(group.getLeaderUuid());
+            if (!(entity instanceof Zombie leader) || leader.getType() != EntityType.ZOMBIE || !leader.isAlive()) {
+                staleGroupIds.add(groupId);
+                continue;
+            }
+
+            MobMindData data = ModAttachments.getExisting(leader);
+            if (data == null || !data.isLeader() || !groupId.equals(data.getGroupId())) {
+                staleGroupIds.add(groupId);
+                continue;
+            }
+
+            ChunkPos leaderChunk = leader.chunkPosition();
+            int dx = Math.abs(leaderChunk.x - center.x);
+            int dz = Math.abs(leaderChunk.z - center.z);
+            if (Math.max(dx, dz) <= chunkRadius) {
+                foundActiveNearby = true;
+            }
+        }
+
+        for (UUID staleGroupId : staleGroupIds) {
+            disbandGroup(level, staleGroupId);
+        }
+        return foundActiveNearby;
     }
 
     public static void setGroupTarget(ServerLevel level, UUID groupId, UUID targetUuid) {
