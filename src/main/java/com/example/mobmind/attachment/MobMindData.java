@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,13 @@ public class MobMindData implements INBTSerializable<CompoundTag> {
     private static final String KEY_NEST_X = "x";
     private static final String KEY_NEST_Y = "y";
     private static final String KEY_NEST_Z = "z";
+    private static final String KEY_ORIGINAL_MAIN_HAND = "originalMainHand";
+    private static final String KEY_ORIGINAL_OFF_HAND = "originalOffHand";
+    private static final String KEY_ORIGINAL_HEAD = "originalHead";
+    private static final String KEY_ORIGINAL_MAIN_HAND_DROP_CHANCE = "originalMainHandDropChance";
+    private static final String KEY_ORIGINAL_OFF_HAND_DROP_CHANCE = "originalOffHandDropChance";
+    private static final String KEY_ORIGINAL_HEAD_DROP_CHANCE = "originalHeadDropChance";
+    private static final String KEY_EQUIPMENT_SNAPSHOT_CAPTURED = "equipmentSnapshotCaptured";
 
     private int awareness;
     private double awarenessProgress;
@@ -41,6 +49,13 @@ public class MobMindData implements INBTSerializable<CompoundTag> {
     private String currentOrder = ORDER_IDLE;
     @Nullable
     private BlockPos nestPos;
+    private ItemStack originalMainHand = ItemStack.EMPTY;
+    private ItemStack originalOffHand = ItemStack.EMPTY;
+    private ItemStack originalHead = ItemStack.EMPTY;
+    private float originalMainHandDropChance;
+    private float originalOffHandDropChance;
+    private float originalHeadDropChance;
+    private boolean equipmentSnapshotCaptured;
 
     public int getAwareness() {
         return awareness;
@@ -173,7 +188,64 @@ public class MobMindData implements INBTSerializable<CompoundTag> {
                 && role == HiveRole.NONE
                 && roleAssignedAt == 0L
                 && ORDER_IDLE.equals(currentOrder)
-                && nestPos == null;
+                && nestPos == null
+                && !equipmentSnapshotCaptured;
+    }
+
+    public ItemStack getOriginalMainHand() {
+        return originalMainHand.copy();
+    }
+
+    public void setOriginalMainHand(ItemStack originalMainHand) {
+        this.originalMainHand = originalMainHand == null ? ItemStack.EMPTY : originalMainHand.copy();
+    }
+
+    public ItemStack getOriginalOffHand() {
+        return originalOffHand.copy();
+    }
+
+    public void setOriginalOffHand(ItemStack originalOffHand) {
+        this.originalOffHand = originalOffHand == null ? ItemStack.EMPTY : originalOffHand.copy();
+    }
+
+    public ItemStack getOriginalHead() {
+        return originalHead.copy();
+    }
+
+    public void setOriginalHead(ItemStack originalHead) {
+        this.originalHead = originalHead == null ? ItemStack.EMPTY : originalHead.copy();
+    }
+
+    public float getOriginalMainHandDropChance() {
+        return originalMainHandDropChance;
+    }
+
+    public void setOriginalMainHandDropChance(float originalMainHandDropChance) {
+        this.originalMainHandDropChance = originalMainHandDropChance;
+    }
+
+    public float getOriginalOffHandDropChance() {
+        return originalOffHandDropChance;
+    }
+
+    public void setOriginalOffHandDropChance(float originalOffHandDropChance) {
+        this.originalOffHandDropChance = originalOffHandDropChance;
+    }
+
+    public float getOriginalHeadDropChance() {
+        return originalHeadDropChance;
+    }
+
+    public void setOriginalHeadDropChance(float originalHeadDropChance) {
+        this.originalHeadDropChance = originalHeadDropChance;
+    }
+
+    public boolean isEquipmentSnapshotCaptured() {
+        return equipmentSnapshotCaptured;
+    }
+
+    public void setEquipmentSnapshotCaptured(boolean equipmentSnapshotCaptured) {
+        this.equipmentSnapshotCaptured = equipmentSnapshotCaptured;
     }
 
     public void clearGroup() {
@@ -184,6 +256,16 @@ public class MobMindData implements INBTSerializable<CompoundTag> {
         this.role = HiveRole.NONE;
         this.roleAssignedAt = 0L;
         this.currentOrder = ORDER_IDLE;
+    }
+
+    public void clearEquipmentSnapshot() {
+        this.originalMainHand = ItemStack.EMPTY;
+        this.originalOffHand = ItemStack.EMPTY;
+        this.originalHead = ItemStack.EMPTY;
+        this.originalMainHandDropChance = 0.0F;
+        this.originalOffHandDropChance = 0.0F;
+        this.originalHeadDropChance = 0.0F;
+        this.equipmentSnapshotCaptured = false;
     }
 
     @Nullable
@@ -216,6 +298,19 @@ public class MobMindData implements INBTSerializable<CompoundTag> {
             nestTag.putInt(KEY_NEST_Z, nestPos.getZ());
             tag.put(KEY_NEST, nestTag);
         }
+        if (!originalMainHand.isEmpty()) {
+            tag.put(KEY_ORIGINAL_MAIN_HAND, originalMainHand.save(provider));
+        }
+        if (!originalOffHand.isEmpty()) {
+            tag.put(KEY_ORIGINAL_OFF_HAND, originalOffHand.save(provider));
+        }
+        if (!originalHead.isEmpty()) {
+            tag.put(KEY_ORIGINAL_HEAD, originalHead.save(provider));
+        }
+        tag.putFloat(KEY_ORIGINAL_MAIN_HAND_DROP_CHANCE, originalMainHandDropChance);
+        tag.putFloat(KEY_ORIGINAL_OFF_HAND_DROP_CHANCE, originalOffHandDropChance);
+        tag.putFloat(KEY_ORIGINAL_HEAD_DROP_CHANCE, originalHeadDropChance);
+        tag.putBoolean(KEY_EQUIPMENT_SNAPSHOT_CAPTURED, equipmentSnapshotCaptured);
 
         return tag;
     }
@@ -243,5 +338,25 @@ public class MobMindData implements INBTSerializable<CompoundTag> {
         if (currentOrder == null || currentOrder.isBlank()) {
             currentOrder = ORDER_IDLE;
         }
+
+        originalMainHand = tag.contains(KEY_ORIGINAL_MAIN_HAND, Tag.TAG_COMPOUND)
+                ? ItemStack.parseOptional(provider, tag.getCompound(KEY_ORIGINAL_MAIN_HAND))
+                : ItemStack.EMPTY;
+        originalOffHand = tag.contains(KEY_ORIGINAL_OFF_HAND, Tag.TAG_COMPOUND)
+                ? ItemStack.parseOptional(provider, tag.getCompound(KEY_ORIGINAL_OFF_HAND))
+                : ItemStack.EMPTY;
+        originalHead = tag.contains(KEY_ORIGINAL_HEAD, Tag.TAG_COMPOUND)
+                ? ItemStack.parseOptional(provider, tag.getCompound(KEY_ORIGINAL_HEAD))
+                : ItemStack.EMPTY;
+        originalMainHandDropChance = tag.contains(KEY_ORIGINAL_MAIN_HAND_DROP_CHANCE, Tag.TAG_FLOAT)
+                ? tag.getFloat(KEY_ORIGINAL_MAIN_HAND_DROP_CHANCE)
+                : 0.0F;
+        originalOffHandDropChance = tag.contains(KEY_ORIGINAL_OFF_HAND_DROP_CHANCE, Tag.TAG_FLOAT)
+                ? tag.getFloat(KEY_ORIGINAL_OFF_HAND_DROP_CHANCE)
+                : 0.0F;
+        originalHeadDropChance = tag.contains(KEY_ORIGINAL_HEAD_DROP_CHANCE, Tag.TAG_FLOAT)
+                ? tag.getFloat(KEY_ORIGINAL_HEAD_DROP_CHANCE)
+                : 0.0F;
+        equipmentSnapshotCaptured = tag.getBoolean(KEY_EQUIPMENT_SNAPSHOT_CAPTURED);
     }
 }

@@ -181,6 +181,7 @@ public final class HiveSelector {
     }
 
     private static void applyRoleEquipment(Zombie zombie, HiveRole role) {
+        captureEquipmentSnapshotIfNeeded(zombie);
         switch (role) {
             case GUARD -> {
                 zombie.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
@@ -208,6 +209,7 @@ public final class HiveSelector {
     }
 
     public static void applyLeaderPresentation(Zombie leader) {
+        captureEquipmentSnapshotIfNeeded(leader);
         leader.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.GOLDEN_HELMET));
         leader.setDropChance(EquipmentSlot.HEAD, 0.0F);
         applyLeaderHighlight(leader);
@@ -218,6 +220,44 @@ public final class HiveSelector {
         addLeaderAttribute(leader.getAttribute(Attributes.SCALE), LEADER_SCALE_MODIFIER, 0.35D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         leader.refreshDimensions();
         leader.setHealth(Math.min(leader.getMaxHealth(), leader.getHealth() + 4.0F));
+    }
+
+    public static void restoreMobMindState(Zombie zombie) {
+        MobMindData data = ModAttachments.get(zombie);
+        if (data.isEquipmentSnapshotCaptured()) {
+            zombie.setItemSlot(EquipmentSlot.MAINHAND, data.getOriginalMainHand());
+            zombie.setItemSlot(EquipmentSlot.OFFHAND, data.getOriginalOffHand());
+            zombie.setItemSlot(EquipmentSlot.HEAD, data.getOriginalHead());
+            zombie.setDropChance(EquipmentSlot.MAINHAND, data.getOriginalMainHandDropChance());
+            zombie.setDropChance(EquipmentSlot.OFFHAND, data.getOriginalOffHandDropChance());
+            zombie.setDropChance(EquipmentSlot.HEAD, data.getOriginalHeadDropChance());
+            data.clearEquipmentSnapshot();
+        }
+
+        if (data.isLeader()) {
+            removeLeaderAttribute(zombie.getAttribute(Attributes.MAX_HEALTH), LEADER_HEALTH_MODIFIER);
+            removeLeaderAttribute(zombie.getAttribute(Attributes.ATTACK_DAMAGE), LEADER_ATTACK_MODIFIER);
+            removeLeaderAttribute(zombie.getAttribute(Attributes.SCALE), LEADER_SCALE_MODIFIER);
+            zombie.refreshDimensions();
+            zombie.setHealth(Math.min(zombie.getHealth(), zombie.getMaxHealth()));
+            zombie.setGlowingTag(false);
+            zombie.setCustomNameVisible(false);
+        }
+    }
+
+    private static void captureEquipmentSnapshotIfNeeded(Zombie zombie) {
+        MobMindData data = ModAttachments.get(zombie);
+        if (data.isEquipmentSnapshotCaptured()) {
+            return;
+        }
+
+        data.setOriginalMainHand(zombie.getItemBySlot(EquipmentSlot.MAINHAND));
+        data.setOriginalOffHand(zombie.getItemBySlot(EquipmentSlot.OFFHAND));
+        data.setOriginalHead(zombie.getItemBySlot(EquipmentSlot.HEAD));
+        data.setOriginalMainHandDropChance(zombie.getEquipmentDropChance(EquipmentSlot.MAINHAND));
+        data.setOriginalOffHandDropChance(zombie.getEquipmentDropChance(EquipmentSlot.OFFHAND));
+        data.setOriginalHeadDropChance(zombie.getEquipmentDropChance(EquipmentSlot.HEAD));
+        data.setEquipmentSnapshotCaptured(true);
     }
 
     public static void applyLeaderHighlight(Zombie leader) {
@@ -231,5 +271,13 @@ public final class HiveSelector {
         }
 
         attribute.addOrReplacePermanentModifier(new AttributeModifier(id, amount, operation));
+    }
+
+    private static void removeLeaderAttribute(AttributeInstance attribute, ResourceLocation id) {
+        if (attribute == null) {
+            return;
+        }
+
+        attribute.removeModifier(id);
     }
 }
