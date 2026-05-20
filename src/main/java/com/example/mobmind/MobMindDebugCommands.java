@@ -4,6 +4,7 @@ import com.example.mobmind.attachment.MobMindData;
 import com.example.mobmind.attachment.ModAttachments;
 import com.example.mobmind.hive.HiveSavedData;
 import com.example.mobmind.hive.HiveSelector;
+import com.example.mobmind.species.SpeciesProfiles;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -197,7 +198,7 @@ public final class MobMindDebugCommands {
         if (value && monster.level() instanceof ServerLevel level) {
             MobMindTickHandler.refreshLeaderLoading(level, monster);
             if (monster instanceof Zombie zombie) {
-                HiveSelector.applyLeaderPresentation(zombie);
+                SpeciesProfiles.zombie().applyLeaderPresentation(zombie);
             }
         } else if (!value) {
             monster.setGlowingTag(false);
