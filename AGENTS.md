@@ -5,7 +5,7 @@
 - Minecraft version: 1.21.1.
 - Loader: NeoForge.
 - Mod id: `mobmind`.
-- Main package: `com.example.mobmind`.
+- Main package: `com.greytaiwolf.mobmind`.
 - Build command: `.\gradlew.bat build`.
 - Client test command: `.\gradlew.bat runClient`.
 
