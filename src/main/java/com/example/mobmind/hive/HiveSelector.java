@@ -9,16 +9,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.monster.Zombie;
 import com.example.mobmind.species.SpeciesProfile;
 import com.example.mobmind.species.SpeciesProfiles;
@@ -30,18 +23,6 @@ public final class HiveSelector {
     public static final int LEADER_AWARENESS_THRESHOLD = 100;
     public static final int LEADER_LEVEL_ONE = 1;
     public static final int LEVEL_ONE_CAPACITY = 6;
-    public static final int LEVEL_ONE_MEMBER_COUNT = LEVEL_ONE_CAPACITY - 1;
-    public static final int MIN_CANDIDATES = LEVEL_ONE_CAPACITY;
-    public static final double GROUP_RADIUS = 32.0D;
-    private static final int LEADER_GLOW_DURATION_TICKS = 240;
-
-    private static final Component LEADER_NAME = Component.literal("\u89c9\u9192\u50f5\u5c38\u9996\u9886");
-    private static final ResourceLocation LEADER_HEALTH_MODIFIER =
-            ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "awakened_zombie_leader_health");
-    private static final ResourceLocation LEADER_ATTACK_MODIFIER =
-            ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "awakened_zombie_leader_attack");
-    private static final ResourceLocation LEADER_SCALE_MODIFIER =
-            ResourceLocation.fromNamespaceAndPath(MobMindMod.MODID, "awakened_zombie_leader_scale");
 
     private HiveSelector() {
     }
@@ -81,7 +62,7 @@ public final class HiveSelector {
                     .filter(zombie -> !assigned.contains(zombie.getUUID()))
                     .filter(zombie -> zombie.distanceToSqr(center) <= radiusSqr)
                     .toList();
-            if (nearby.size() < MIN_CANDIDATES) {
+            if (nearby.size() < profile.groupCapacity()) {
                 continue;
             }
 
@@ -89,7 +70,7 @@ public final class HiveSelector {
                     .max(Comparator.comparingInt(zombie -> ModAttachments.get(zombie).getAwareness()))
                     .orElse(center);
             List<Zombie> team = selectLevelOneTeam(leader, nearby, profile);
-            if (team.size() < LEVEL_ONE_CAPACITY) {
+            if (team.size() < profile.groupCapacity()) {
                 continue;
             }
 
@@ -204,29 +185,4 @@ public final class HiveSelector {
         }
     }
 
-    public static void applyLeaderPresentation(Zombie leader) {
-        leader.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.GOLDEN_HELMET));
-        leader.setDropChance(EquipmentSlot.HEAD, 0.0F);
-        applyLeaderHighlight(leader);
-        leader.setCustomName(LEADER_NAME);
-        leader.setCustomNameVisible(true);
-        addLeaderAttribute(leader.getAttribute(Attributes.MAX_HEALTH), LEADER_HEALTH_MODIFIER, 0.20D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-        addLeaderAttribute(leader.getAttribute(Attributes.ATTACK_DAMAGE), LEADER_ATTACK_MODIFIER, 1.0D, AttributeModifier.Operation.ADD_VALUE);
-        addLeaderAttribute(leader.getAttribute(Attributes.SCALE), LEADER_SCALE_MODIFIER, 0.35D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-        leader.refreshDimensions();
-        leader.setHealth(Math.min(leader.getMaxHealth(), leader.getHealth() + 4.0F));
-    }
-
-    public static void applyLeaderHighlight(Zombie leader) {
-        leader.setGlowingTag(true);
-        leader.addEffect(new MobEffectInstance(MobEffects.GLOWING, LEADER_GLOW_DURATION_TICKS, 0, true, false, false));
-    }
-
-    private static void addLeaderAttribute(AttributeInstance attribute, ResourceLocation id, double amount, AttributeModifier.Operation operation) {
-        if (attribute == null) {
-            return;
-        }
-
-        attribute.addOrReplacePermanentModifier(new AttributeModifier(id, amount, operation));
-    }
 }

@@ -18,7 +18,7 @@ public final class CombatEventHandler {
     }
 
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
-        if (!(event.getEntity() instanceof Zombie zombie) || !SpeciesProfiles.zombie().isEligibleLeader(zombie)) {
+        if (!(event.getEntity() instanceof Zombie zombie) || SpeciesProfiles.resolve(zombie) == null) {
             return;
         }
         if (!(zombie.level() instanceof ServerLevel level)) {
@@ -38,7 +38,7 @@ public final class CombatEventHandler {
     }
 
     public static void onLivingDeath(LivingDeathEvent event) {
-        if (!(event.getEntity() instanceof Zombie zombie) || !SpeciesProfiles.zombie().isEligibleLeader(zombie)) {
+        if (!(event.getEntity() instanceof Zombie zombie) || SpeciesProfiles.resolve(zombie) == null) {
             return;
         }
         if (!(zombie.level() instanceof ServerLevel level)) {

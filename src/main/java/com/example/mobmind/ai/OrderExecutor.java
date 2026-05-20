@@ -94,7 +94,7 @@ public final class OrderExecutor {
     @Nullable
     private static Zombie getLeader(ServerLevel level, HiveData group) {
         Entity entity = level.getEntity(group.getLeaderUuid());
-        if (entity instanceof Zombie zombie && zombie.isAlive() && SpeciesProfiles.zombie().isEligibleLeader(zombie)) {
+        if (entity instanceof Zombie zombie && zombie.isAlive() && SpeciesProfiles.resolve(zombie) != null) {
             return zombie;
         }
 
