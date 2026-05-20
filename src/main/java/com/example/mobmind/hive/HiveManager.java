@@ -61,6 +61,18 @@ public final class HiveManager {
         setGroupOrder(level, groupId, order);
     }
 
+
+    public static void reportThreat(ServerLevel level, UUID groupId, UUID playerUuid, long gameTime, int levelValue) {
+        HiveData group = groups(level).get(groupId);
+        if (group == null) {
+            return;
+        }
+
+        group.setPendingThreatUuid(playerUuid);
+        group.setLastThreatReportTick(gameTime);
+        group.setThreatLevel(levelValue);
+    }
+
     public static void clearGroupTarget(ServerLevel level, UUID groupId, HiveOrder nextOrder) {
         HiveData group = groups(level).get(groupId);
         if (group == null) {

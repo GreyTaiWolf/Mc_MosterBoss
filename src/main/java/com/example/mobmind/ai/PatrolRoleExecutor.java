@@ -20,7 +20,7 @@ public final class PatrolRoleExecutor {
     public static void execute(ServerLevel level, HiveData group, Zombie leader, Zombie patrol) {
         ServerPlayer player = findVisiblePlayer(level, patrol);
         if (player != null) {
-            HiveManager.setGroupTarget(level, group.getGroupId(), player.getUUID());
+            HiveManager.reportThreat(level, group.getGroupId(), player.getUUID(), level.getGameTime(), 1);
             patrol.setTarget(player);
             patrol.getNavigation().moveTo(player, 1.15D);
             return;
