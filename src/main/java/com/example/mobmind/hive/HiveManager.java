@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
+import com.example.mobmind.species.SpeciesProfiles;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -61,13 +62,13 @@ public final class HiveManager {
             }
 
             Entity entity = level.getEntity(group.getLeaderUuid());
-            if (!(entity instanceof Zombie leader) || leader.getType() != EntityType.ZOMBIE || !leader.isAlive()) {
+            if (!(entity instanceof Zombie leader) || !leader.isAlive()) {
                 staleGroupIds.add(groupId);
                 continue;
             }
 
             MobMindData data = ModAttachments.getExisting(leader);
-            if (data == null || !data.isLeader() || !groupId.equals(data.getGroupId())) {
+            if (data == null || !data.isLeader() || !groupId.equals(data.getGroupId()) || !SpeciesProfiles.matchesSpecies(leader, speciesId)) {
                 staleGroupIds.add(groupId);
                 continue;
             }
