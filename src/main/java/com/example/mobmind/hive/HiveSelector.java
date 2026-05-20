@@ -14,13 +14,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.monster.Zombie;
+import com.example.mobmind.species.SpeciesProfile;
+import com.example.mobmind.species.SpeciesProfiles;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -46,11 +47,12 @@ public final class HiveSelector {
     }
 
     public static void scan(ServerLevel level) {
+        SpeciesProfile profile = SpeciesProfiles.zombie();
         List<Zombie> candidates = new ArrayList<>();
         Set<UUID> alreadyGrouped = new HashSet<>();
 
         for (Entity entity : level.getAllEntities()) {
-            if (!(entity instanceof Zombie zombie) || !isBaseZombie(zombie)) {
+            if (!(entity instanceof Zombie zombie) || !profile.isEligibleLeader(zombie)) {
                 continue;
             }
 
@@ -69,7 +71,7 @@ public final class HiveSelector {
         }
 
         Set<UUID> assigned = new HashSet<>(alreadyGrouped);
-        double radiusSqr = GROUP_RADIUS * GROUP_RADIUS;
+        double radiusSqr = profile.groupRadius() * profile.groupRadius();
         for (Zombie center : candidates) {
             if (assigned.contains(center.getUUID())) {
                 continue;
@@ -86,12 +88,12 @@ public final class HiveSelector {
             Zombie leader = nearby.stream()
                     .max(Comparator.comparingInt(zombie -> ModAttachments.get(zombie).getAwareness()))
                     .orElse(center);
-            List<Zombie> team = selectLevelOneTeam(leader, nearby);
+            List<Zombie> team = selectLevelOneTeam(leader, nearby, profile);
             if (team.size() < LEVEL_ONE_CAPACITY) {
                 continue;
             }
 
-            createGroup(level, leader, team);
+            createGroup(level, leader, team, profile);
             team.forEach(zombie -> assigned.add(zombie.getUUID()));
         }
     }
@@ -105,52 +107,47 @@ public final class HiveSelector {
                 && data.getAwareness() >= LEADER_AWARENESS_THRESHOLD;
     }
 
-    private static boolean isBaseZombie(Zombie zombie) {
-        return zombie.getType() == EntityType.ZOMBIE;
-    }
-
-    private static void createGroup(ServerLevel level, Zombie leader, List<Zombie> team) {
+    private static void createGroup(ServerLevel level, Zombie leader, List<Zombie> team, SpeciesProfile profile) {
         UUID groupId = UUID.randomUUID();
         UUID leaderUuid = leader.getUUID();
         long assignedAt = level.getGameTime();
         List<Zombie> roleMembers = team.stream()
                 .filter(member -> member != leader)
                 .sorted(memberPriority(leader))
-                .limit(LEVEL_ONE_MEMBER_COUNT)
+                .limit(profile.roleTemplate().size())
                 .toList();
 
         assignMember(leader, groupId, leaderUuid, true, HiveRole.LEADER, assignedAt);
-        assignRoleIfPresent(roleMembers, 0, groupId, leaderUuid, HiveRole.GUARD, assignedAt);
-        assignRoleIfPresent(roleMembers, 1, groupId, leaderUuid, HiveRole.GUARD, assignedAt);
-        assignRoleIfPresent(roleMembers, 2, groupId, leaderUuid, HiveRole.MINER, assignedAt);
-        assignRoleIfPresent(roleMembers, 3, groupId, leaderUuid, HiveRole.PATROL, assignedAt);
-        assignRoleIfPresent(roleMembers, 4, groupId, leaderUuid, HiveRole.BUILDER, assignedAt);
+        for (int i = 0; i < profile.roleTemplate().size(); i++) {
+            assignRoleIfPresent(roleMembers, i, groupId, leaderUuid, profile.roleTemplate().get(i), assignedAt);
+        }
 
         HiveData group = HiveManager.getOrCreateGroup(level, groupId, leaderUuid, HiveOrder.IDLE);
         group.setLeaderLevel(LEADER_LEVEL_ONE);
-        group.setCapacity(LEVEL_ONE_CAPACITY);
-        applyLeaderPresentation(leader);
+        group.setCapacity(profile.groupCapacity());
+        profile.applyLeaderPresentation(leader);
         MobMindMod.LOGGER.debug("Created level {} zombie hive {} with leader {} and {} total zombies",
                 LEADER_LEVEL_ONE, groupId, leaderUuid, team.size());
     }
 
     private static void ensureLeaderState(ServerLevel level, Zombie leader, MobMindData data) {
+        SpeciesProfile profile = SpeciesProfiles.zombie();
         data.setLeaderUuid(leader.getUUID());
         data.setLeaderLevel(LEADER_LEVEL_ONE);
         data.setRole(HiveRole.LEADER);
         HiveData group = HiveManager.getOrCreateGroup(level, data.getGroupId(), leader.getUUID(), HiveOrder.fromName(data.getCurrentOrder()));
         group.setLeaderLevel(LEADER_LEVEL_ONE);
-        group.setCapacity(LEVEL_ONE_CAPACITY);
-        applyLeaderPresentation(leader);
+        group.setCapacity(profile.groupCapacity());
+        profile.applyLeaderPresentation(leader);
     }
 
-    private static List<Zombie> selectLevelOneTeam(Zombie leader, List<Zombie> nearby) {
+    private static List<Zombie> selectLevelOneTeam(Zombie leader, List<Zombie> nearby, SpeciesProfile profile) {
         List<Zombie> members = nearby.stream()
                 .filter(zombie -> zombie != leader)
                 .sorted(memberPriority(leader))
-                .limit(LEVEL_ONE_MEMBER_COUNT)
+                .limit(profile.roleTemplate().size())
                 .toList();
-        List<Zombie> team = new ArrayList<>(LEVEL_ONE_CAPACITY);
+        List<Zombie> team = new ArrayList<>(profile.groupCapacity());
         team.add(leader);
         team.addAll(members);
         return team;
